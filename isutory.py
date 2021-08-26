@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from collections import Counter
 import re
 from networkx import DiGraph
 from networkx.algorithms.isomorphism import DiGraphMatcher
@@ -46,7 +47,7 @@ def unify_uri(uri, aggregates):
 def req(t):
     return "%s %s" % (t[0], t[1])
 
-def node(r, cnt):
+def node(r, cnt=0):
     """node returns node's name.
     
     pydot doesn't escape names of nodes for DOT, so it's better to convert URI to integers.
@@ -92,6 +93,34 @@ def create_stories(data):
             cnt += 1
     return stories
 
+def create_unified_graph(data):
+    timelines = dict()
+    for d in data:
+        timeline = timelines.get(d[USER], list())
+        t = (d[METHOD], d[URI], d[TIME])
+        timeline.append(t)
+        timelines[d[USER]] = timeline
+    from_ = dict()
+    for timeline in timelines.values():
+        timeline.sort(key=lambda t: t[2])
+        if len(timeline) < 2:
+            continue
+        for t1, t2 in zip(timeline, timeline[1:]):
+            r1 = req(t1)
+            r2 = req(t2)
+            total, to_ = from_.get(r1, (0, Counter()))
+            to_[r2] += 1
+            from_[r1] = (total + 1, to_)
+    stories = DiGraph()
+    for f, (total, to_) in from_.items():
+        nf = node(f)
+        stories.add_node(nf, label=f)
+        for t, cnt in to_.items():
+            nt = node(t)
+            stories.add_node(nt, label=t)
+            stories.add_edge(nf, nt, color="0 0 %f" % (0.9 - 0.9 * cnt / total))
+    return stories
+
 def show_graph(stories, out):
     pd = to_pydot(stories)
     if out.endswith(".svg"):
@@ -110,13 +139,17 @@ def main(args):
     aggregates = [re.compile(a) for a in args.aggregates]
     for i in range(len(data)):
         data[i][URI] = unify_uri(data[i][URI], aggregates)
-    stories = create_stories(data)
+    if args.unified:
+        stories = create_unified_graph(data)
+    else:
+        stories = create_stories(data)
     show_graph(stories, args.out)
 
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('ltsv', help='nginx log formatted in LTSV')
     parser.add_argument('--aggregates', nargs='*', help='URL aggregation')
+    parser.add_argument('--unified', '-u', action='store_true', help='show unified graph which highlights where to go')
     parser.add_argument('--out', '-o', default='stories.svg', help='name of output svg file')
     args = parser.parse_args()
     main(args)
