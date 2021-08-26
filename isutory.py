@@ -134,7 +134,7 @@ def create_unified_graph(data):
         for t, cnt in to_.items():
             nt = node(t)
             stories.add_node(nt, label=t)
-            stories.add_edge(nf, nt, color="0 0 %f" % (0.9 - 0.9 * cnt / total))
+            stories.add_edge(nf, nt, color="#000000%02X" % (16 + 240 * cnt // total))
     return stories
 
 def show_graph(stories, out):
