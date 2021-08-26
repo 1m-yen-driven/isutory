@@ -133,6 +133,8 @@ def show_graph(stories, out):
         raise ValueError("unexpected extension: %s" % out)
 
 def main(args):
+    global USER
+    USER = args.user
     data = load_data(args.ltsv, [URI, METHOD, TIME, USER])
     if len(args.aggregates) == 1:
         args.aggregates = args.aggregates[0].split(',')
@@ -149,7 +151,8 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('ltsv', help='nginx log formatted in LTSV')
     parser.add_argument('--aggregates', nargs='*', help='URL aggregation')
-    parser.add_argument('--unified', '-u', action='store_true', help='show unified graph which highlights where to go')
+    parser.add_argument('--unified', action='store_true', help='show unified graph which highlights where to go')
+    parser.add_argument('--user', '-u', default=USER, help='label of user identifier')
     parser.add_argument('--out', '-o', default='stories.svg', help='name of output svg file')
     args = parser.parse_args()
     main(args)
