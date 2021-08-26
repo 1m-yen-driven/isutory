@@ -4,7 +4,8 @@ ISUCONにおけるユーザーの挙動の確認ツール
 
 ## Requirements
 
-python3
+- Graphviz
+- python3
 
 ```
 pip install -r requirements.txt
