@@ -27,4 +27,6 @@ python3 isutory.py path/to/access.log --user ua
 
 `--aggregates="^/api/isu.+","^/assets/.+"` のようにオプションで正規表現を使ってURIをまとめることができる
 
+`--ignore="^/js/.+","^/css/.+"` のようにオプションで無視するURIを指定できる
+
 `--unified` を指定するとグラフを統合して、次にアクセスする可能性が高いノードへのエッジを濃く表示する

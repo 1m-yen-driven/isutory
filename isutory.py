@@ -38,11 +38,27 @@ def load_data(path, necessary_keys):
             )
     return data
 
+def is_ignored(uri, ignore):
+    for i in ignore:
+        if i.match(uri):
+            return True
+    return False
+
+def filter_ignored_uri(data, ignore):
+    ignore = [re.compile(i) for i in ignore]
+    return list(filter(lambda d: not is_ignored(d[URI], ignore), data))
+
 def unify_uri(uri, aggregates):
     for a in aggregates:
         if a.match(uri):
             return a.pattern
     return uri
+
+def aggregate(data, aggregates):
+    aggregates = [re.compile(a) for a in aggregates]
+    for i in range(len(data)):
+        data[i][URI] = unify_uri(data[i][URI], aggregates)
+    return data
 
 def req(t):
     return "%s %s" % (t[0], t[1])
@@ -136,11 +152,12 @@ def main(args):
     global USER
     USER = args.user
     data = load_data(args.ltsv, [URI, METHOD, TIME, USER])
+    if len(args.ignore) == 1:
+        args.ignore = args.ignore[0].split(',')
+    data = filter_ignored_uri(data, args.ignore)
     if len(args.aggregates) == 1:
         args.aggregates = args.aggregates[0].split(',')
-    aggregates = [re.compile(a) for a in args.aggregates]
-    for i in range(len(data)):
-        data[i][URI] = unify_uri(data[i][URI], aggregates)
+    data = aggregate(data, args.aggregates)
     if args.unified:
         stories = create_unified_graph(data)
     else:
@@ -151,6 +168,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('ltsv', help='nginx log formatted in LTSV')
     parser.add_argument('--aggregates', nargs='*', help='URL aggregation')
+    parser.add_argument('--ignore', nargs='*', help='URL to ignore')
     parser.add_argument('--unified', action='store_true', help='show unified graph which highlights where to go')
     parser.add_argument('--user', '-u', default=USER, help='label of user identifier')
     parser.add_argument('--out', '-o', default='stories.svg', help='name of output svg file')
