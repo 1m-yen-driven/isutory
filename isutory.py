@@ -58,6 +58,7 @@ def aggregate(data, aggregates):
         raw = data[i][URI]
         unified = unify_uri(raw, aggregates)
         data[i][URI] = unified
+        unified = data[i][METHOD] + " " + unified
         if not (unified in hits):
             hits[unified] = set()
         hits[unified].add(raw)
@@ -180,6 +181,15 @@ def show_statistics(data, hitdata, aggregates):
             if not (v in by_key[k]):
                 by_key[k][v] = 0
             by_key[k][v] += 1
+            if k == URI:
+                k = METHOD + URI
+                if not (k in by_key):
+                    by_key[k] = {}
+                v = d[METHOD] + " " + v
+                if not (v in by_key[k]):
+                    by_key[k][v] = 0
+                by_key[k][v] += 1
+
     def print_formatted_data(key, value_len, print_count, hit=False):
         results = []
         for k, v in by_key[key].items():
@@ -204,8 +214,8 @@ def show_statistics(data, hitdata, aggregates):
     print_formatted_data(UA, 30, 10)
     print(f"\n### STATUS ({len(by_key[STATUS])}) ###")
     print_formatted_data(STATUS, 30, 100)
-    print(f"\n### URI ({len(by_key[URI])}) ###")
-    print_formatted_data(URI, 50, 100, True)
+    print(f"\n### URI ({len(by_key[METHOD + URI])}) ###")
+    print_formatted_data(METHOD + URI, 50, 100, True)
     # print("\n### TIME & SIZE ###")
     # SIZE, APPTIME, REQTIME
 
