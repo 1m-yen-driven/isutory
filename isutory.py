@@ -185,6 +185,7 @@ def show_statistics(data, hitdata):
         for k, v in by_key[key].items():
             results.append([k, v])
         results.sort(key = lambda x: x[1], reverse=True)
+        print(f"{len(data)} (100.0%) : *")
         for value, count in results[:print_count]:
             if len(value) >= value_len:
                 half = int(value_len / 2)
@@ -193,9 +194,9 @@ def show_statistics(data, hitdata):
                 name = value
             percent = f"{100*count/len(data):.1f}"
             if hit and hitdata[value] > 1:
-                print(f"{percent}% :", name, f"({hitdata[value]})")
+                print(f"{count} ({percent}%) :", name, f"({hitdata[value]})")
             else:
-                print(f"{percent}% :", name)
+                print(f"{count} ({percent}%) :", name)
         if len(results) > print_count:
             print("...")
     print(f"### USER AGENT ({len(by_key[UA])}) ###")
@@ -204,14 +205,8 @@ def show_statistics(data, hitdata):
     print_formatted_data(STATUS, 30, 100)
     print(f"\n### URI ({len(by_key[URI])}) ###")
     print_formatted_data(URI, 50, 100, True)
-
-    print("\n### INFO ###")
-    print("COUNT:", len(data))
-
-    print("\n### TIME ###")
+    # print("\n### TIME & SIZE ###")
     # SIZE, APPTIME, REQTIME
-    ## STORY
-    # [TIME, METHOD, URI] by [VHOST, UA]
 
 def main(args):
     data = load_data(args.ltsv)
