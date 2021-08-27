@@ -53,9 +53,18 @@ def unify_uri(uri, aggregates):
 
 def aggregate(data, aggregates):
     aggregates = [re.compile(a) for a in aggregates if a]
+    hits = {}
     for i in range(len(data)):
-        data[i][URI] = unify_uri(data[i][URI], aggregates)
-    return data
+        raw = data[i][URI]
+        unified = unify_uri(raw, aggregates)
+        data[i][URI] = unified
+        if not (unified in hits):
+            hits[unified] = set()
+        hits[unified].add(raw)
+    hitdata = {}
+    for k, v in hits.items():
+        hitdata[k] = len(v)
+    return data, hitdata
 
 
 ### CREATE STORY GRAPH
@@ -161,7 +170,7 @@ def write_graph(stories, out):
         raise ValueError("unexpected extension: %s" % out)
 
 ### STATISTICS MODE
-def show_statistics(data):
+def show_statistics(data, hitdata):
     # show variation counts
     by_key = {}
     for d in data:
@@ -171,7 +180,7 @@ def show_statistics(data):
             if not (v in by_key[k]):
                 by_key[k][v] = 0
             by_key[k][v] += 1
-    def print_formatted_data(key, value_len, print_count):
+    def print_formatted_data(key, value_len, print_count, hit=False):
         results = []
         for k, v in by_key[key].items():
             results.append([k, v])
@@ -182,7 +191,11 @@ def show_statistics(data):
                 name = value[:half] + "..." + value[len(value) - half:]
             else:
                 name = value
-            print(f"{100*count/len(data):.1f}% :", name)
+            percent = f"{100*count/len(data):.1f}"
+            if hit and hitdata[value] > 1:
+                print(f"{percent}% :", name, f"({hitdata[value]})")
+            else:
+                print(f"{percent}% :", name)
         if len(results) > print_count:
             print("...")
     print(f"### USER AGENT ({len(by_key[UA])}) ###")
@@ -190,7 +203,7 @@ def show_statistics(data):
     print(f"\n### STATUS ({len(by_key[STATUS])}) ###")
     print_formatted_data(STATUS, 30, 100)
     print(f"\n### URI ({len(by_key[URI])}) ###")
-    print_formatted_data(URI, 50, 100)
+    print_formatted_data(URI, 50, 100, True)
 
     print("\n### INFO ###")
     print("COUNT:", len(data))
@@ -209,9 +222,9 @@ def main(args):
     data = filter_ignored_uri(data, args.ignore)
     if len(args.aggregates) == 1:
         args.aggregates = args.aggregates[0].split(',')
-    data = aggregate(data, args.aggregates)
+    data, hitdata = aggregate(data, args.aggregates)
     if args.statistics:
-        show_statistics(data)
+        show_statistics(data, hitdata)
         return
     if args.unified:
         stories = create_unified_graph(data)
