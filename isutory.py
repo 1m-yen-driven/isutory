@@ -160,6 +160,46 @@ def write_graph(stories, out):
     else:
         raise ValueError("unexpected extension: %s" % out)
 
+### STATISTICS MODE
+def show_statistics(data):
+    # show variation counts
+    by_key = {}
+    for d in data:
+        for k, v in d.items():
+            if not (k in by_key):
+                by_key[k] = {}
+            if not (v in by_key[k]):
+                by_key[k][v] = 0
+            by_key[k][v] += 1
+    def print_formatted_data(key, value_len, print_count):
+        results = []
+        for k, v in by_key[key].items():
+            results.append([k, v])
+        results.sort(key = lambda x: x[1], reverse=True)
+        for value, count in results[:print_count]:
+            if len(value) >= value_len:
+                half = int(value_len / 2)
+                name = value[:half] + "..." + value[len(value) - half:]
+            else:
+                name = value
+            print(f"{100*count/len(data):.1f}% :", name)
+        if len(results) > print_count:
+            print("...")
+    print(f"### USER AGENT ({len(by_key[UA])}) ###")
+    print_formatted_data(UA, 30, 10)
+    print(f"\n### STATUS ({len(by_key[STATUS])}) ###")
+    print_formatted_data(STATUS, 30, 100)
+    print(f"\n### URI ({len(by_key[URI])}) ###")
+    print_formatted_data(URI, 50, 100)
+
+    print("\n### INFO ###")
+    print("COUNT:", len(data))
+
+    print("\n### TIME ###")
+    # SIZE, APPTIME, REQTIME
+    ## STORY
+    # [TIME, METHOD, URI] by [VHOST, UA]
+
 def main(args):
     data = load_data(args.ltsv)
     if len(args.ignore) == 1:
@@ -170,6 +210,9 @@ def main(args):
     if len(args.aggregates) == 1:
         args.aggregates = args.aggregates[0].split(',')
     data = aggregate(data, args.aggregates)
+    if args.statistics:
+        show_statistics(data)
+        return
     if args.unified:
         stories = create_unified_graph(data)
     else:
