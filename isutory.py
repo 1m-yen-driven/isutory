@@ -170,7 +170,7 @@ def write_graph(stories, out):
         raise ValueError("unexpected extension: %s" % out)
 
 ### STATISTICS MODE
-def show_statistics(data, hitdata):
+def show_statistics(data, hitdata, aggregates):
     # show variation counts
     by_key = {}
     for d in data:
@@ -199,6 +199,7 @@ def show_statistics(data, hitdata):
                 print(f"{count} ({percent}%) :", name)
         if len(results) > print_count:
             print("...")
+    print(aggregates)
     print(f"### USER AGENT ({len(by_key[UA])}) ###")
     print_formatted_data(UA, 30, 10)
     print(f"\n### STATUS ({len(by_key[STATUS])}) ###")
@@ -219,7 +220,7 @@ def main(args):
         args.aggregates = args.aggregates[0].split(',')
     data, hitdata = aggregate(data, args.aggregates)
     if args.statistics:
-        show_statistics(data, hitdata)
+        show_statistics(data, hitdata, args.aggregates )
         return
     if args.unified:
         stories = create_unified_graph(data)
