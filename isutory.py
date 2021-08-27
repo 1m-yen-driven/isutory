@@ -209,7 +209,7 @@ def show_statistics(data, hitdata, aggregates):
                 print(f"{count} ({percent}%) :", name)
         if len(results) > print_count:
             print("...")
-    print(aggregates)
+    print("--aggregates=" + ",".join([f"\"{a}\"" for a in aggregates]))
     print(f"### USER AGENT ({len(by_key[UA])}) ###")
     print_formatted_data(UA, 30, 10)
     print(f"\n### STATUS ({len(by_key[STATUS])}) ###")
