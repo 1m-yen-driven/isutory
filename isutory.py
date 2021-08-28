@@ -168,9 +168,9 @@ def create_unified_graph(data):
         for t, cnt in dsts.items():
             nt = node(t)
             rate = cnt / total
-            if rate < 0.072:
-                continue
             rate2 = cnt / src[t][0]
+            if rate < 0.072 and rate2 < 0.072:
+                continue
             rate_min = min(rate, rate2)
             # print(cnt, "/", total, src[t][0])
             color = "#000000%02X" % int(30 + 225 * rate_min)
