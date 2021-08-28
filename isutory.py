@@ -90,7 +90,7 @@ def node(r, cnt=0):
     return _id["%d:%s" % (cnt, r)]
 
 def req(t):
-    return "%s %s" % (t[0], t[1])
+    return "%s\n%s" % (t[0], t[1])
 
 def create_story(timeline, story_id):
     t = timeline
@@ -98,13 +98,17 @@ def create_story(timeline, story_id):
     s = DiGraph()
     r = req(t[0])
     n = node(r, sid)
-    s.add_node(n, label=r)
+    node_settings = {
+        "shape": "box",
+        "style": "rounded",
+    }
+    s.add_node(n, label=r, **node_settings)
     for d1, d2 in zip(t, t[1:]):
         r1 = req(d1)
         n1 = node(r1, sid)
         r2 = req(d2)
         n2 = node(r2, sid)
-        s.add_node(n2, label=r2)
+        s.add_node(n2, label=r2, **node_settings)
         s.add_edge(n1, n2)
     return s
 
@@ -146,17 +150,30 @@ def create_unified_graph(data):
         for t1, t2 in zip(timeline, timeline[1:]):
             r1 = req(t1)
             r2 = req(t2)
-            total, dst = src.get(r1, (0, Counter()))
-            dst[r2] += 1
-            src[r1] = (total + 1, dst)
+            total, dsts = src.get(r1, (0, Counter()))
+            dsts[r2] += 1
+            src[r1] = (total + 1, dsts)
+    pprint(src)
     stories = DiGraph()
-    for f, (total, dst) in src.items():
+    for f, (total, dsts) in src.items():
         nf = node(f)
-        stories.add_node(nf, label=f)
-        for t, cnt in dst.items():
+        names = f.split("\n")
+        label = f"{names[0]} ({total})\n{names[1]}"
+        stories.add_node(nf, label=label, **{
+            "shape": "box",
+            "style": "rounded",
+        })
+    for f, (total, dsts) in src.items():
+        nf = node(f)
+        for t, cnt in dsts.items():
             nt = node(t)
-            stories.add_node(nt, label=t)
-            stories.add_edge(nf, nt, color="#000000%02X" % (16 + 240 * cnt // total))
+            rate = cnt / total
+            print(cnt, "/", total)
+            if rate < 0.05:
+                continue
+            stories.add_edge(nf, nt, **{
+                "color": "#000000%02X" % (16 + 240 * cnt // total)
+            })
     return stories
 
 def write_graph(stories, out):
