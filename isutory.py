@@ -172,11 +172,12 @@ def create_unified_graph(data):
             if rate < 0.072 and rate2 < 0.072:
                 continue
             rate_min = min(rate, rate2)
-            # print(cnt, "/", total, src[t][0])
-            color = "#000000%02X" % int(30 + 225 * rate_min)
+            def to_gray(rate):
+                return "#000000%02X" % int(30 + 225 * rate)
+            color = f"{to_gray(rate)};0.33:{to_gray(0.5 * (rate + rate2))};0.33:{to_gray(rate2)}"
             stories.add_edge(nf, nt, **{
                 "color": color,
-                "fontcolor": color,
+                "fontcolor": to_gray(rate_min),
                 "penwidth": int(max(1, 3 * rate_min)),
                 "label": cnt,
                 # "label": f"{rate * 100:.0f}%",
