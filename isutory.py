@@ -1,10 +1,10 @@
 from argparse import ArgumentParser
 from collections import Counter
 import re
+from collections import defaultdict
 from networkx import DiGraph
 from networkx.algorithms.isomorphism import DiGraphMatcher
-from networkx.drawing import nx_pydot
-from pprint import pprint
+from networkx.drawing.nx_pydot import to_pydot
 
 # global keys
 URI = 'uri'
@@ -53,14 +53,12 @@ def unify_uri(uri, aggregates):
 
 def aggregate(data, aggregates):
     aggregates = [re.compile(a) for a in aggregates if a]
-    hits = {}
+    hits = defaultdict(set)
     for i in range(len(data)):
         raw = data[i][URI]
         unified = unify_uri(raw, aggregates)
         data[i][URI] = unified
         unified = data[i][METHOD] + " " + unified
-        if not (unified in hits):
-            hits[unified] = set()
         hits[unified].add(raw)
     hitdata = {}
     for k, v in hits.items():
@@ -153,7 +151,6 @@ def create_unified_graph(data):
             total, dsts = src.get(r1, (0, Counter()))
             dsts[r2] += 1
             src[r1] = (total + 1, dsts)
-    # pprint(src)
     stories = DiGraph()
     for f, (total, dsts) in src.items():
         nf = node(f)
@@ -186,7 +183,7 @@ def create_unified_graph(data):
     return stories
 
 def write_graph(stories, out):
-    pd = nx_pydot.to_pydot(stories)
+    pd = to_pydot(stories)
     if out.endswith(".svg") or out.endswith(".html"):
         pd.write_svg(out)
     elif out.endswith(".dot"):
@@ -199,30 +196,18 @@ def write_graph(stories, out):
 ### STATISTICS MODE
 def show_statistics(data, hitdata, aggregates):
     # show variation counts
-    by_key = {}
+    by_key = defaultdict(Counter)
     for d in data:
         for k, v in d.items():
-            if not (k in by_key):
-                by_key[k] = {}
-            if not (v in by_key[k]):
-                by_key[k][v] = 0
             by_key[k][v] += 1
             if k == URI:
                 k = METHOD + URI
-                if not (k in by_key):
-                    by_key[k] = {}
                 v = d[METHOD] + " " + v
-                if not (v in by_key[k]):
-                    by_key[k][v] = 0
                 by_key[k][v] += 1
 
     def print_formatted_data(key, value_len, print_count, hit=False):
-        results = []
-        for k, v in by_key[key].items():
-            results.append([k, v])
-        results.sort(key = lambda x: x[1], reverse=True)
         print(f"{len(data)} (100.0%) : *")
-        for value, count in results[:print_count]:
+        for value, count in by_key[key].most_common(print_count):
             if len(value) >= value_len:
                 half = int(value_len / 2)
                 name = value[:half] + "..." + value[len(value) - half:]
@@ -233,7 +218,7 @@ def show_statistics(data, hitdata, aggregates):
                 print(f"{count} ({percent}%) :", name, f"({hitdata[value]})")
             else:
                 print(f"{count} ({percent}%) :", name)
-        if len(results) > print_count:
+        if len(by_key[key]) > print_count:
             print("...")
     print("--aggregates=" + ",".join([f"\"{a}\"" for a in aggregates]))
     print(f"### USER AGENT ({len(by_key[UA])}) ###")
