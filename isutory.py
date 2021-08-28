@@ -3,7 +3,7 @@ from collections import Counter
 import re
 from networkx import DiGraph
 from networkx.algorithms.isomorphism import DiGraphMatcher
-from networkx.drawing.nx_pydot import to_pydot
+from networkx.drawing import nx_pydot
 from pprint import pprint
 
 # global keys
@@ -153,7 +153,7 @@ def create_unified_graph(data):
             total, dsts = src.get(r1, (0, Counter()))
             dsts[r2] += 1
             src[r1] = (total + 1, dsts)
-    pprint(src)
+    # pprint(src)
     stories = DiGraph()
     for f, (total, dsts) in src.items():
         nf = node(f)
@@ -168,16 +168,23 @@ def create_unified_graph(data):
         for t, cnt in dsts.items():
             nt = node(t)
             rate = cnt / total
-            print(cnt, "/", total)
-            if rate < 0.05:
+            if rate < 0.072:
                 continue
+            rate2 = cnt / src[t][0]
+            rate_min = min(rate, rate2)
+            # print(cnt, "/", total, src[t][0])
+            color = "#000000%02X" % int(30 + 225 * rate_min)
             stories.add_edge(nf, nt, **{
-                "color": "#000000%02X" % (16 + 240 * cnt // total)
+                "color": color,
+                "fontcolor": color,
+                "penwidth": int(max(1, 3 * rate_min)),
+                "label": cnt,
+                # "label": f"{rate * 100:.0f}%",
             })
     return stories
 
 def write_graph(stories, out):
-    pd = to_pydot(stories)
+    pd = nx_pydot.to_pydot(stories)
     if out.endswith(".svg") or out.endswith(".html"):
         pd.write_svg(out)
     elif out.endswith(".dot"):
