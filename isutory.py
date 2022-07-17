@@ -16,8 +16,9 @@ APPTIME = "apptime"
 REQTIME = "reqtime"
 STATUS = "status"
 SIZE = "size"
-KEYS = [URI, METHOD, TIME, UA, VHOST, APPTIME, REQTIME, STATUS, SIZE]
-IDENTIFIER = 'ua'
+UID = "uid"
+KEYS = [URI, METHOD, TIME, UA, VHOST, APPTIME, REQTIME, STATUS, SIZE, UID]
+IDENTIFIER = UID
 
 ###  PARSE DATA
 def load_data(path):
