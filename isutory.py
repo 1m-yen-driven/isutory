@@ -17,7 +17,7 @@ REQTIME = "reqtime"
 STATUS = "status"
 SIZE = "size"
 UID = "uid"
-KEYS = [URI, METHOD, TIME, UA, VHOST, APPTIME, REQTIME, STATUS, SIZE, UID]
+KEYS = set([URI, METHOD, TIME, UA, VHOST, APPTIME, REQTIME, STATUS, SIZE, UID])
 IDENTIFIER = UID
 
 ###  PARSE DATA
@@ -261,4 +261,5 @@ if __name__ == '__main__':
     parser.add_argument('--out', default='stories.svg', help='name of output svg file')
     args = parser.parse_args()
     IDENTIFIER = args.identifier
+    KEYS.add(IDENTIFIER)
     main(args)
